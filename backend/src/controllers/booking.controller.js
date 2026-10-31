@@ -3,12 +3,13 @@ import { Booking } from "../models/booking.model.js"
 import { Resource } from "../models/resource.model.js"
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponce } from "../utils/ApiRespoce.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const bookRequestResource = asyncHandler(async(req,res) => {
-    const { resouceId, purpose,startDate , endtDate } = req.body
+    const { resouceId, purpose,startDate , endDate } = req.body
     const owner = req.user._id;
      if(
-        [resouceId,purpose].some((field) => field?.trim() ==="")
+        [resouceId,purpose,startDate,endDate].some((field) => field?.trim() ==="")
     ){
         throw new ApiError(400,"All fields are required");
     }
@@ -17,7 +18,7 @@ const bookRequestResource = asyncHandler(async(req,res) => {
         purpose,
         owner,
         startDate,
-        endtDate
+        endDate
     })
     if(!bookedItem){
         throw new ApiError(500,"Something went wrong while booking request this resorce")
@@ -42,7 +43,7 @@ const confirmBooking = asyncHandler(async(req,res)=>{
     }
     const userid=req.user._id;
 
-    if(resource.ownerId != userid){
+    if(resource.ownerId.toString() !== userid.toString()){
         throw new ApiError(400,"Owner of this resource can only confirm this booking");
     }
 
@@ -65,7 +66,7 @@ const confirmBooking = asyncHandler(async(req,res)=>{
         fieldToUpdate.totalPrice = totalPrice;
     }
 
-    const bookedItem = await User.findByIdAndUpdate(
+    const bookedItem = await Booking.findByIdAndUpdate(
             bookingId,
             {
                 $set : fieldToUpdate
@@ -85,8 +86,57 @@ const confirmBooking = asyncHandler(async(req,res)=>{
     );
 
 })
-
+endDate
 const pickUpBooking = asyncHandler(async(req,res) => {
-    const { actualCheckInDate } = req.body
+    const { actualCheckInDate, bookingId, conditionRating, conditionNote } = req.body
+
+    const status = "CHECKED_IN"
+
+    const imageLocalFiles = req.files?.images;
+    if (!imageLocalFiles || imageLocalFiles.toString().length === 0) {
+      throw new ApiError(400, "At least one resource image is required");
+    }
+    const uploadPromises = imageLocalFiles.map((file) => uploadOnCloudinary(file.path));
+
+    const uploadResults = await Promise.all(uploadPromises);
+
+    const imageUrls = uploadResults
+      .filter((result) => result !== null)
+      .map((result) => result.secure_url || result.url);
+
+      const fieldToUpdate = {}
+      fieldToUpdate.actualCheckInDate = actualCheckInDate || new Date();
+      fieldToUpdate.status = status;
+      fieldToUpdate.beforePhotoURI = imageUrls;
+      if (conditionRating) {
+        fieldToUpdate.conditionRating = conditionRating;
+      }
+      if (conditionNote) {
+        fieldToUpdate.conditionNote = conditionNote;
+      }
+
+    const bookedItem = await Booking.findByIdAndUpdate(
+            bookingId,
+            {
+                $set : fieldToUpdate
     
+            },
+            {
+                new : true
+            }
+    
+    )
+
+    return res.status(201).json(
+        new ApiResponce(200,"Booking Check In confirmed",bookedItem)
+    ); 
 })
+
+
+
+
+export {
+    bookRequestResource,
+    confirmBooking,
+    pickUpBooking
+}

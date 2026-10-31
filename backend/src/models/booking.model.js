@@ -16,7 +16,7 @@ const bookingSchema = new Schema({
         type : Date,
         required : true
     },
-    endtDate : {
+    endDate : {
         type : Date,
         required : true
     },
@@ -40,7 +40,7 @@ const bookingSchema = new Schema({
     },
     status : {
         type: String,
-        enum: ["PENDING_APPROVAL", "APPROVED", "REJECTED","RETURNED","CANCELLED","OVERDUE"],
+        enum: ["PENDING_APPROVAL", "APPROVED", "REJECTED","RETURNED","CANCELLED","CHECKED_IN"],
         default: "PENDING_APPROVAL"
     },
     rejectionReason : {
