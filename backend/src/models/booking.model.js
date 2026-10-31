@@ -40,7 +40,7 @@ const bookingSchema = new Schema({
     },
     status : {
         type: String,
-        enum: ["PENDING_APPROVAL", "APPROVED", "REJECTED","RETURNED","CANCELLED","CHECKED_IN"],
+        enum: ["PENDING_APPROVAL", "APPROVED", "REJECTED","RETURNED","CANCELLED","CHECKED_IN","OVERDUE"],
         default: "PENDING_APPROVAL"
     },
     rejectionReason : {
@@ -59,7 +59,11 @@ const bookingSchema = new Schema({
     }],
     conditionNote : {
         type : String,
-    }
+    },
+    incidents : [{
+        type : Schema.Types.ObjectId,
+        ref : "Incident"
+    }]
 
 
 }, {timestamps: true});

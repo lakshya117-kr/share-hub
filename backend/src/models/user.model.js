@@ -31,11 +31,19 @@ const userSchema = new Schema({
     coverImage:{
         type : String,
     },
+    resources : [{
+        type : Schema.Types.ObjectId,
+        ref : "Resource"
+    }],
     history : [{
         type : Schema.Types.ObjectId,
-        ref : "Video"
+        ref : "Booking"
     }],
-    // TODO: fix reference here
+    qualification : [{
+        type : Schema.Types.ObjectId,
+        ref : "Qualification"
+    }],
+    // TODO: implement history,qualification,resouce in user part
     password : {
         type : String,
         required : [true, "Password is required"]
@@ -47,11 +55,16 @@ const userSchema = new Schema({
     IdentityNumber : {
         type : Number,
         unique : true,
-        require : true
+        required : true
     },
     isIdentityVerified : {
         type: Boolean,
         default : false
+    },
+    role : {
+        type: String,
+        enum: ["USER", "OWNER", "ADMIN"],
+        default: "USER"
     },
     refreshToken : {
         type : String
